@@ -1,0 +1,17 @@
+{
+  "name": "ganga-travels-invoice-generator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "playwright": "^1.55.0"
+  }
+}

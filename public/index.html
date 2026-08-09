@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ganga Travels Invoice Generator</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #111;
+    }
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    h1 { margin: 0 0 8px; }
+    .note { color: #555; margin-bottom: 24px; }
+    form {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 22px;
+      border-radius: 8px;
+    }
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 0 0 24px;
+    }
+    legend {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      font: inherit;
+      font-weight: 400;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .service {
+      border: 1px solid #ddd;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    button {
+      border: 0;
+      border-radius: 5px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .add { background: #eee; }
+    .remove { background: #f2d6d6; }
+    .generate {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      background: #111;
+      color: #fff;
+      font-size: 16px;
+    }
+    .error {
+      color: #a00;
+      margin-top: 12px;
+      white-space: pre-wrap;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Ganga Travels Invoice Generator</h1>
+    <div class="note">
+      Enter invoice details and services. The generated PDF uses the Ganga Travels layout.
+    </div>
+
+    <form id="invoice-form">
+      <fieldset>
+        <legend>Invoice</legend>
+        <div class="grid">
+          <label>
+            Invoice No
+            <input name="invoiceNo" required placeholder="020">
+          </label>
+          <label>
+            Date
+            <input name="date" required placeholder="28-04-2026">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Receiver / Billed To</legend>
+        <div class="grid">
+          <label>
+            Name
+            <input name="receiverName" required>
+          </label>
+          <label>
+            GSTIN
+            <input name="receiverGstin" required>
+          </label>
+          <label>
+            State
+            <input name="receiverState" required>
+          </label>
+          <label>
+            State Code
+            <input name="receiverStateCode" required>
+          </label>
+        </div>
+        <label style="margin-top:14px;">
+          Address
+          <textarea name="receiverAddress" required></textarea>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Services</legend>
+        <div id="services"></div>
+        <button type="button" class="add" id="add-service">+ Add Service</button>
+      </fieldset>
+
+      <button class="generate" type="submit">Generate PDF</button>
+      <div id="error" class="error"></div>
+    </form>
+  </main>
+
+  <template id="service-template">
+    <div class="service">
+      <div class="service-header">
+        <strong>Service <span class="service-number"></span></strong>
+        <button type="button" class="remove">Remove</button>
+      </div>
+      <div class="grid">
+        <label>
+          Description of Service
+          <textarea class="description" required></textarea>
+        </label>
+        <label>
+          Quantity
+          <textarea class="quantity" required></textarea>
+        </label>
+        <label>
+          Rate
+          <input class="rate" type="number" min="0" step="0.01" required>
+        </label>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const services = document.querySelector("#services");
+    const template = document.querySelector("#service-template");
+    const form = document.querySelector("#invoice-form");
+    const error = document.querySelector("#error");
+
+    function addService() {
+      const node = template.content.cloneNode(true);
+      const service = node.querySelector(".service");
+
+      service.querySelector(".remove").addEventListener("click", () => {
+        service.remove();
+        renumber();
+      });
+
+      services.appendChild(node);
+      renumber();
+    }
+
+    function renumber() {
+      [...services.querySelectorAll(".service")].forEach((service, index) => {
+        service.querySelector(".service-number").textContent = index + 1;
+        service.querySelector(".remove").disabled =
+          services.querySelectorAll(".service").length === 1;
+      });
+    }
+
+    document.querySelector("#add-service").addEventListener("click", addService);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+
+      const data = new FormData(form);
+
+      const payload = {
+        invoiceNo: data.get("invoiceNo"),
+        date: data.get("date"),
+        receiver: {
+          name: data.get("receiverName"),
+          address: data.get("receiverAddress"),
+          gstin: data.get("receiverGstin"),
+          state: data.get("receiverState"),
+          stateCode: data.get("receiverStateCode")
+        },
+        modeOfPayment: null,
+        suppliersReference: null,
+        services: [...services.querySelectorAll(".service")].map((service) => ({
+          description: service.querySelector(".description").value,
+          quantity: service.querySelector(".quantity").value,
+          rate: Number(service.querySelector(".rate").value)
+        }))
+      };
+
+      try {
+        const response = await fetch("/api/invoice/pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.error || "PDF generation failed.");
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-${payload.invoiceNo}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        error.textContent = err.message;
+      }
+    });
+
+    addService();
+  </script>
+</body>
+</html>
