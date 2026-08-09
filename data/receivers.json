@@ -1,0 +1,13 @@
+{
+  "receivers": [
+    {
+      "id": "intersight-holidays",
+      "name": "INTERSIGHT HOLIDAYS PVT LTD",
+      "address": "N.H. By Pass\nVyttila, Cochin-19\nKerala",
+      "gstin": "32AABCI1532R1ZK",
+      "state": "KERALA",
+      "stateCode": "32",
+      "invoiceFormat": "standard"
+    }
+  ]
+}

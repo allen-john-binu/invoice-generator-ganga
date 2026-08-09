@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Ganga Travels Invoice Generator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #111;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+    }
+
+    .note {
+      color: #555;
+      margin-bottom: 24px;
+    }
+
+    form {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 22px;
+      border-radius: 8px;
+    }
+
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 0 0 24px;
+    }
+
+    legend {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      font: inherit;
+      font-weight: 400;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .service {
+      border: 1px solid #ddd;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 5px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .add {
+      background: #eee;
+    }
+
+    .remove {
+      background: #f2d6d6;
+    }
+
+    .generate {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      background: #111;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .error {
+      color: #a00;
+      margin-top: 12px;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Receiver */
+
+    .receiver-section {
+      margin-bottom: 24px;
+    }
+
+    .receiver-selector {
+      margin-bottom: 14px;
+    }
+
+    .receiver-selector label,
+    .receiver-field label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #111;
+    }
+
+    .receiver-selector select,
+    .receiver-field input,
+    .receiver-field textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      background: #fff;
+      color: #111;
+      font: inherit;
+      font-weight: 400;
+    }
+
+    .receiver-selector select {
+      height: 42px;
+      cursor: pointer;
+    }
+
+    .receiver-selector select:focus,
+    .receiver-field input:focus,
+    .receiver-field textarea:focus {
+      outline: none;
+      border-color: #777;
+      box-shadow: none;
+    }
+
+    .receiver-fields {
+      margin-top: 14px;
+    }
+
+    .receiver-fields .grid {
+      gap: 14px;
+    }
+
+    .receiver-field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .receiver-field input[readonly],
+    .receiver-field textarea[readonly] {
+      background: #f4f4f4;
+      color: #555;
+      cursor: default;
+    }
+
+    .receiver-field input:not([readonly]),
+    .receiver-field textarea:not([readonly]) {
+      background: #fff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <h1>Ganga Travels Invoice Generator</h1>
+
+    <div class="note">
+      Enter invoice details and services.
+      The generated PDF uses the Ganga Travels layout.
+    </div>
+
+    <form id="invoice-form">
+
+      <!-- Invoice -->
+
+      <fieldset>
+
+        <legend>Invoice</legend>
+
+        <div class="grid">
+
+          <label>
+            Invoice No
+
+            <input name="invoiceNo" required placeholder="020">
+          </label>
+
+          <label>
+            Date
+
+            <input name="date" required type="date">
+          </label>
+
+        </div>
+
+      </fieldset>
+
+
+      <!-- Receiver -->
+
+      <fieldset class="receiver-section">
+
+        <legend>Receiver / Billed To</legend>
+
+        <div class="receiver-selector">
+
+          <label for="receiver-select">
+            Receiver
+          </label>
+
+          <select name="receiverId" id="receiver-select" required>
+            <option value="">
+              Select Receiver
+            </option>
+
+            <option value="others">
+              Others
+            </option>
+          </select>
+
+        </div>
+
+
+        <div id="receiver-details" class="receiver-fields" hidden>
+
+          <div class="grid">
+
+            <div class="receiver-field">
+
+              <label for="receiver-name">
+                Name
+              </label>
+
+              <input name="receiverName" id="receiver-name" required>
+
+            </div>
+
+
+            <div class="receiver-field">
+
+              <label for="receiver-gstin">
+                GSTIN
+              </label>
+
+              <input name="receiverGstin" id="receiver-gstin" required>
+
+            </div>
+
+
+            <div class="receiver-field">
+
+              <label for="receiver-state">
+                State
+              </label>
+
+              <input name="receiverState" id="receiver-state" required>
+
+            </div>
+
+
+            <div class="receiver-field">
+
+              <label for="receiver-state-code">
+                State Code
+              </label>
+
+              <input name="receiverStateCode" id="receiver-state-code" required>
+
+            </div>
+
+          </div>
+
+
+          <div class="receiver-field" style="margin-top: 16px;">
+
+            <label for="receiver-address">
+              Address
+            </label>
+
+            <textarea name="receiverAddress" id="receiver-address" required></textarea>
+
+          </div>
+
+        </div>
+
+      </fieldset>
+
+
+      <!-- Services -->
+
+      <fieldset>
+
+        <legend>Services</legend>
+
+        <div id="services"></div>
+
+        <button type="button" class="add" id="add-service">
+          + Add Service
+        </button>
+
+      </fieldset>
+
+
+      <button class="generate" type="submit">
+        Generate PDF
+      </button>
+
+      <div id="error" class="error"></div>
+
+    </form>
+
+  </main>
+
+
+  <!-- Service template -->
+
+  <template id="service-template">
+
+    <div class="service">
+
+      <div class="service-header">
+
+        <strong>
+          Service
+          <span class="service-number"></span>
+        </strong>
+
+        <button type="button" class="remove">
+          Remove
+        </button>
+
+      </div>
+
+
+      <div class="grid">
+
+        <label>
+
+          Description of Service
+
+          <textarea class="description" required></textarea>
+
+        </label>
+
+
+        <label>
+
+          Quantity
+
+          <textarea class="quantity" required></textarea>
+
+        </label>
+
+
+        <label>
+
+          Rate
+
+          <input class="rate" type="number" min="0" step="0.01" required>
+
+        </label>
+
+      </div>
+
+    </div>
+
+  </template>
+
+
+  <script>
+
+    const services =
+      document.querySelector("#services");
+
+    const template =
+      document.querySelector("#service-template");
+
+    const form =
+      document.querySelector("#invoice-form");
+
+    const error =
+      document.querySelector("#error");
+
+
+    let receivers = [];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Receiver elements
+    |--------------------------------------------------------------------------
+    */
+
+    const receiverSelect =
+      document.getElementById(
+        "receiver-select"
+      );
+
+    const receiverDetails =
+      document.getElementById(
+        "receiver-details"
+      );
+
+    const receiverName =
+      document.getElementById(
+        "receiver-name"
+      );
+
+    const receiverAddress =
+      document.getElementById(
+        "receiver-address"
+      );
+
+    const receiverGstin =
+      document.getElementById(
+        "receiver-gstin"
+      );
+
+    const receiverState =
+      document.getElementById(
+        "receiver-state"
+      );
+
+    const receiverStateCode =
+      document.getElementById(
+        "receiver-state-code"
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load receivers
+    |--------------------------------------------------------------------------
+    */
+
+    async function loadReceivers() {
+
+      const response =
+        await fetch("/api/receivers");
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load receivers"
+        );
+      }
+
+      receivers =
+        await response.json();
+
+      for (const receiver of receivers) {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+        option.value =
+          receiver.id;
+
+        option.textContent =
+          receiver.name;
+
+        receiverSelect.appendChild(
+          option
+        );
+      }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Receiver selection
+    |--------------------------------------------------------------------------
+    */
+
+    receiverSelect.addEventListener(
+      "change",
+      () => {
+
+        const selectedId =
+          receiverSelect.value;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Others
+        |--------------------------------------------------------------------------
+        */
+
+        if (selectedId === "others") {
+
+          receiverDetails.hidden =
+            false;
+
+          receiverName.value = "";
+          receiverAddress.value = "";
+          receiverGstin.value = "";
+          receiverState.value = "";
+          receiverStateCode.value = "";
+
+          receiverName.readOnly = false;
+          receiverAddress.readOnly = false;
+          receiverGstin.readOnly = false;
+          receiverState.readOnly = false;
+          receiverStateCode.readOnly = false;
+
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | No receiver
+        |--------------------------------------------------------------------------
+        */
+
+        if (!selectedId) {
+
+          receiverDetails.hidden =
+            true;
+
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Saved receiver
+        |--------------------------------------------------------------------------
+        */
+
+        const receiver =
+          receivers.find(
+            (item) =>
+              item.id === selectedId
+          );
+
+
+        if (!receiver) {
+
+          receiverDetails.hidden =
+            true;
+
+          return;
+        }
+
+
+        receiverDetails.hidden =
+          false;
+
+        receiverName.value =
+          receiver.name;
+
+        receiverAddress.value =
+          receiver.address;
+
+        receiverGstin.value =
+          receiver.gstin;
+
+        receiverState.value =
+          receiver.state;
+
+        receiverStateCode.value =
+          receiver.stateCode;
+
+
+        receiverName.readOnly =
+          true;
+
+        receiverAddress.readOnly =
+          true;
+
+        receiverGstin.readOnly =
+          true;
+
+        receiverState.readOnly =
+          true;
+
+        receiverStateCode.readOnly =
+          true;
+      }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Services
+    |--------------------------------------------------------------------------
+    */
+
+    function addService() {
+
+      const node =
+        template.content.cloneNode(
+          true
+        );
+
+      const service =
+        node.querySelector(
+          ".service"
+        );
+
+
+      service
+        .querySelector(".remove")
+        .addEventListener(
+          "click",
+          () => {
+
+            service.remove();
+
+            renumber();
+          }
+        );
+
+
+      services.appendChild(node);
+
+      renumber();
+    }
+
+
+    function renumber() {
+
+      const serviceElements =
+        services.querySelectorAll(
+          ".service"
+        );
+
+
+      serviceElements.forEach(
+        (service, index) => {
+
+          service
+            .querySelector(
+              ".service-number"
+            )
+            .textContent =
+            index + 1;
+
+
+          service
+            .querySelector(
+              ".remove"
+            )
+            .disabled =
+            serviceElements.length === 1;
+        }
+      );
+    }
+
+
+    document
+      .querySelector("#add-service")
+      .addEventListener(
+        "click",
+        addService
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Populate form from saved invoice
+    |--------------------------------------------------------------------------
+    */
+
+    function populateInvoiceForm(
+      invoice
+    ) {
+
+      /*
+      |--------------------------------------------------------------------------
+      | New invoice number/date
+      |--------------------------------------------------------------------------
+      |
+      | Deliberately blank.
+      | The copied invoice is only being used
+      | as a shortcut for entering another bill.
+      |
+      */
+
+      document.querySelector(
+        '[name="invoiceNo"]'
+      ).value = "";
+
+      document.querySelector(
+        '[name="date"]'
+      ).value = "";
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Receiver
+      |--------------------------------------------------------------------------
+      */
+
+      receiverSelect.value =
+        invoice.receiverId || "others";
+
+
+      receiverDetails.hidden =
+        false;
+
+
+      receiverName.value =
+        invoice.receiver?.name || "";
+
+      receiverAddress.value =
+        invoice.receiver?.address || "";
+
+      receiverGstin.value =
+        invoice.receiver?.gstin || "";
+
+      receiverState.value =
+        invoice.receiver?.state || "";
+
+      receiverStateCode.value =
+        invoice.receiver?.stateCode || "";
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Receiver editing rules
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        invoice.receiverId ===
+        "others"
+      ) {
+
+        receiverName.readOnly =
+          false;
+
+        receiverAddress.readOnly =
+          false;
+
+        receiverGstin.readOnly =
+          false;
+
+        receiverState.readOnly =
+          false;
+
+        receiverStateCode.readOnly =
+          false;
+
+      } else {
+
+        receiverName.readOnly =
+          true;
+
+        receiverAddress.readOnly =
+          true;
+
+        receiverGstin.readOnly =
+          true;
+
+        receiverState.readOnly =
+          true;
+
+        receiverStateCode.readOnly =
+          true;
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Services
+      |--------------------------------------------------------------------------
+      */
+
+      services.innerHTML = "";
+
+
+      for (
+        const serviceData
+        of invoice.services || []
+      ) {
+
+        addService();
+
+        const service =
+          services.lastElementChild;
+
+
+        service.querySelector(
+          ".description"
+        ).value =
+          serviceData.description || "";
+
+
+        service.querySelector(
+          ".quantity"
+        ).value =
+          serviceData.quantity || "";
+
+
+        service.querySelector(
+          ".rate"
+        ).value =
+          serviceData.rate ?? "";
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Make sure at least one service exists
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !invoice.services ||
+        invoice.services.length === 0
+      ) {
+        addService();
+      }
+
+
+      renumber();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load invoice for "Edit from here"
+    |--------------------------------------------------------------------------
+    */
+
+    async function loadInvoiceForEdit() {
+
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
+
+
+      const edit =
+        params.get("edit");
+
+
+      if (!edit) {
+        return;
+      }
+
+
+      const slashIndex =
+        edit.indexOf("/");
+
+
+      if (slashIndex === -1) {
+
+        throw new Error(
+          "Invalid edit reference"
+        );
+      }
+
+
+      const receiverId =
+        edit.slice(
+          0,
+          slashIndex
+        );
+
+
+      const fileName =
+        edit.slice(
+          slashIndex + 1
+        );
+
+
+      const response =
+        await fetch(
+          `/api/invoices/${encodeURIComponent(
+            receiverId
+          )}/${encodeURIComponent(
+            fileName
+          )}`
+        );
+
+
+      if (!response.ok) {
+
+        const body =
+          await response
+            .json()
+            .catch(() => ({}));
+
+
+        throw new Error(
+          body.error ||
+          "Failed to load invoice"
+        );
+      }
+
+
+      const invoice =
+        await response.json();
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Important:
+      |
+      | Make sure the saved receiver ID is
+      | available in the form before selecting it.
+      |
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        invoice.receiverId &&
+        invoice.receiverId !== "others"
+      ) {
+
+        const receiverExists =
+          receivers.some(
+            (receiver) =>
+              receiver.id ===
+              invoice.receiverId
+          );
+
+
+        if (!receiverExists) {
+
+          throw new Error(
+            "The receiver for this invoice no longer exists."
+          );
+        }
+      }
+
+
+      populateInvoiceForm(
+        invoice
+      );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Submit invoice
+    |--------------------------------------------------------------------------
+    */
+
+    form.addEventListener(
+      "submit",
+      async (event) => {
+
+        event.preventDefault();
+
+        error.textContent = "";
+
+
+        const data =
+          new FormData(form);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Convert date picker value:
+        |
+        | YYYY-MM-DD
+        |
+        | into:
+        |
+        | DD-MM-YYYY
+        |--------------------------------------------------------------------------
+        */
+
+        const dateValue =
+          data.get("date");
+
+
+        if (!dateValue) {
+
+          error.textContent =
+            "Please select an invoice date.";
+
+          return;
+        }
+
+
+        const [
+          year,
+          month,
+          day
+        ] =
+          dateValue.split("-");
+
+
+        const formattedDate =
+          `${day}-${month}-${year}`;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build payload
+        |--------------------------------------------------------------------------
+        */
+
+        const payload = {
+
+          invoiceNo:
+            data.get("invoiceNo"),
+
+          date:
+            formattedDate,
+
+          receiverId:
+            data.get("receiverId"),
+
+          receiver: {
+
+            name:
+              data.get("receiverName"),
+
+            address:
+              data.get("receiverAddress"),
+
+            gstin:
+              data.get("receiverGstin"),
+
+            state:
+              data.get("receiverState"),
+
+            stateCode:
+              data.get("receiverStateCode")
+          },
+
+          modeOfPayment:
+            null,
+
+          suppliersReference:
+            null,
+
+          services:
+            [
+              ...services.querySelectorAll(
+                ".service"
+              )
+            ].map(
+              (service) => ({
+
+                description:
+                  service.querySelector(
+                    ".description"
+                  ).value,
+
+                quantity:
+                  service.querySelector(
+                    ".quantity"
+                  ).value,
+
+                rate:
+                  Number(
+                    service.querySelector(
+                      ".rate"
+                    ).value
+                  )
+              })
+            )
+        };
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate PDF
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+          const response =
+            await fetch(
+              "/api/invoice/pdf",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                  JSON.stringify(
+                    payload
+                  )
+              }
+            );
+
+
+          if (!response.ok) {
+
+            const body =
+              await response
+                .json()
+                .catch(() => ({}));
+
+
+            throw new Error(
+              body.error ||
+              "PDF generation failed."
+            );
+          }
+
+
+          const blob =
+            await response.blob();
+
+
+          const url =
+            URL.createObjectURL(
+              blob
+            );
+
+
+          const a =
+            document.createElement(
+              "a"
+            );
+
+
+          a.href = url;
+
+
+          a.download =
+            `invoice-${payload.invoiceNo}.pdf`;
+
+
+          document.body.appendChild(a);
+
+          a.click();
+
+          a.remove();
+
+
+          URL.revokeObjectURL(
+            url
+          );
+
+        } catch (err) {
+
+          console.error(err);
+
+          error.textContent =
+            err.message;
+        }
+      }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Initial page setup
+    |--------------------------------------------------------------------------
+    */
+
+    async function initializePage() {
+
+      try {
+
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT:
+        |
+        | Receivers must load BEFORE edit invoice.
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        await loadReceivers();
+
+        await loadInvoiceForEdit();
+
+      } catch (err) {
+
+        console.error(err);
+
+        error.textContent =
+          err.message;
+      }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Start
+    |--------------------------------------------------------------------------
+    */
+
+    addService();
+
+    initializePage();
+
+  </script>
+
+</body>
+
+</html>

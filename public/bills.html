@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>View Bills - Ganga Travels</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            color: #111;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .back {
+            text-decoration: none;
+            color: #111;
+            font-weight: 700;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 22px;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            font: inherit;
+            background: #fff;
+        }
+
+        .empty {
+            margin-top: 24px;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+        }
+
+        .bill-list {
+            margin-top: 24px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .bill-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 15px 18px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .bill-row:last-child {
+            border-bottom: 0;
+        }
+
+        .bill-row:hover {
+            background: #f8f8f8;
+        }
+
+        .bill-header {
+            background: #f4f4f4;
+            font-weight: 700;
+            cursor: default;
+        }
+
+        .bill-header:hover {
+            background: #f4f4f4;
+        }
+
+        .bill-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .download {
+            background: #111;
+            color: #fff;
+        }
+
+        .edit {
+            background: #eee;
+            color: #111;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+
+        <div class="top">
+            <h1>View Bills</h1>
+            <a class="back" href="/">← Home</a>
+        </div>
+
+        <section class="panel">
+
+            <label>
+                Receiver
+
+                <select id="receiver-select">
+                    <option value="">Select Receiver</option>
+                </select>
+            </label>
+
+            <div id="bill-container"></div>
+
+        </section>
+
+    </main>
+
+    <script>
+        const receiverSelect =
+            document.querySelector("#receiver-select");
+
+        const billContainer =
+            document.querySelector("#bill-container");
+
+        let receivers = [];
+
+        async function loadReceivers() {
+            const response = await fetch("/api/receivers");
+
+            if (!response.ok) {
+                throw new Error("Failed to load receivers");
+            }
+
+            receivers = await response.json();
+
+            receiverSelect.innerHTML = `
+        <option value="">Select Receiver</option>
+      `;
+
+            for (const receiver of receivers) {
+                const option = document.createElement("option");
+
+                option.value = receiver.id;
+                option.textContent = receiver.name;
+
+                receiverSelect.appendChild(option);
+            }
+
+            const others = document.createElement("option");
+            others.value = "others";
+            others.textContent = "Others";
+
+            receiverSelect.appendChild(others);
+        }
+
+        receiverSelect.addEventListener("change", async () => {
+            const receiverId = receiverSelect.value;
+
+            billContainer.innerHTML = "";
+
+            if (!receiverId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `/api/invoices/${encodeURIComponent(receiverId)}`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to load bills");
+                }
+
+                const bills = await response.json();
+
+                renderBills(bills, receiverId);
+
+            } catch (error) {
+                billContainer.innerHTML = `
+          <div class="empty">
+            ${error.message}
+          </div>
+        `;
+            }
+        });
+
+        function renderBills(bills, receiverId) {
+            if (bills.length === 0) {
+                billContainer.innerHTML = `
+          <div class="empty">
+            No bills found for this receiver.
+          </div>
+        `;
+
+                return;
+            }
+
+            const list = document.createElement("div");
+            list.className = "bill-list";
+
+            const header = document.createElement("div");
+            header.className = "bill-row bill-header";
+
+            header.innerHTML = `
+        <div>Invoice No.</div>
+        <div>Invoice Date</div>
+      `;
+
+            list.appendChild(header);
+
+            for (const bill of bills) {
+                const row = document.createElement("div");
+                row.className = "bill-row";
+
+                row.innerHTML = `
+          <div>${escapeHtml(bill.invoiceNo)}</div>
+          <div>${escapeHtml(bill.date)}</div>
+
+          <div class="bill-actions">
+            <button
+              class="download"
+              type="button"
+              data-action="download"
+            >
+              View / Download Bill
+            </button>
+
+            <button
+              class="edit"
+              type="button"
+              data-action="edit"
+            >
+              Edit from here
+            </button>
+          </div>
+        `;
+
+                row.querySelector('[data-action="download"]')
+                    .addEventListener("click", (event) => {
+                        event.stopPropagation();
+
+                        window.open(
+                            `/api/invoices/${encodeURIComponent(receiverId)}/${encodeURIComponent(bill.fileName)}/pdf`,
+                            "_blank"
+                        );
+                    });
+
+                row.querySelector('[data-action="edit"]')
+                    .addEventListener("click", (event) => {
+                        event.stopPropagation();
+
+                        window.location.href =
+                            `/generate.html?edit=${encodeURIComponent(receiverId)}/${encodeURIComponent(bill.fileName)}`;
+                    });
+
+                list.appendChild(row);
+            }
+
+            billContainer.appendChild(list);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        loadReceivers().catch(console.error);
+    </script>
+</body>
+
+</html>
