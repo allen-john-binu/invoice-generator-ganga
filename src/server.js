@@ -74,16 +74,16 @@ async function loadReceivers() {
 const app = express();
 
 // Enable this again when you want password protection:
-//
-// app.use(
-//   basicAuth({
-//     users: {
-//       invoice: process.env.INVOICE_PASSWORD
-//     },
-//     challenge: true,
-//     realm: "Ganga Travels Invoice Generator"
-//   })
-// );
+
+app.use(
+  basicAuth({
+    users: {
+      invoice: process.env.INVOICE_PASSWORD
+    },
+    challenge: true,
+    realm: "Ganga Travels Invoice Generator"
+  })
+);
 
 const port = process.env.PORT || 3000;
 
