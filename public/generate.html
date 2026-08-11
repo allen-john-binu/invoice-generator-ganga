@@ -68,6 +68,80 @@
       font-size: 14px;
     }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.home-button {
+  display: inline-block;
+  padding: 9px 14px;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  background: #fff;
+  color: #111;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.home-button:hover {
+  background: #f4f4f4;
+}
+
+.success-page {
+  display: none;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 50px 30px;
+  text-align: center;
+}
+
+.success-page h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.success-page p {
+  margin: 0 0 28px;
+  color: #666;
+}
+
+.success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.success-actions a,
+.success-actions button {
+  display: inline-block;
+  padding: 11px 18px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.home-success {
+  background: #111;
+  color: #fff;
+}
+
+.new-bill {
+  background: #eee;
+  color: #111;
+  border: 0;
+}
+
     input,
     textarea {
       width: 100%;
@@ -210,12 +284,12 @@
 <body>
 
   <main class="page">
+    <div class="page-header">
+      <h1>Ganga Travels Invoice Generator</h1>
 
-    <h1>Ganga Travels Invoice Generator</h1>
-
-    <div class="note">
-      Enter invoice details and services.
-      The generated PDF uses the Ganga Travels layout.
+      <a href="/" class="home-button">
+        ← Home
+      </a>
     </div>
 
     <form id="invoice-form">
@@ -358,6 +432,26 @@
 
     </form>
 
+    <div id="success-page" class="success-page">
+      <h2>Invoice Generated Successfully</h2>
+    
+      <p id="success-message">
+        The invoice has been generated and downloaded.
+      </p>
+    
+      <div class="success-actions">
+    
+        <a href="/" class="home-success">
+          Back to Home
+        </a>
+    
+        <button type="button" class="new-bill" id="new-bill">
+          Generate Another Bill
+        </button>
+    
+      </div>
+    </div>
+
   </main>
 
 
@@ -430,9 +524,26 @@
     const error =
       document.querySelector("#error");
 
+    const successPage =
+      document.querySelector("#success-page");
+
+    const newBillButton =
+      document.querySelector("#new-bill");
+
+    const successMessage =
+      document.querySelector("#success-message");
+
 
     let receivers = [];
 
+
+    newBillButton.addEventListener(
+        "click",
+        () => {
+          window.location.href =
+            "/generate.html";
+        }
+      );
 
     /*
     |--------------------------------------------------------------------------
@@ -1155,25 +1266,16 @@
           const blob =
             await response.blob();
 
-
           const url =
-            URL.createObjectURL(
-              blob
-            );
-
+            URL.createObjectURL(blob);
 
           const a =
-            document.createElement(
-              "a"
-            );
-
+            document.createElement("a");
 
           a.href = url;
 
-
           a.download =
             `invoice-${payload.invoiceNo}.pdf`;
-
 
           document.body.appendChild(a);
 
@@ -1181,10 +1283,24 @@
 
           a.remove();
 
+          /*
+           * Keep the generated PDF URL alive while
+           * the success page is displayed.
+           */
+          window.generatedPdfUrl = url;
 
-          URL.revokeObjectURL(
-            url
-          );
+          /*
+           * Hide the form.
+           */
+          form.style.display = "none";
+
+          /*
+           * Show success page.
+           */
+          successPage.style.display = "block";
+
+          successMessage.textContent =
+            `Invoice ${payload.invoiceNo} has been generated and downloaded.`;
 
         } catch (err) {
 
